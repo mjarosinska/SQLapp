@@ -1,5 +1,8 @@
 package com.example.magda.sqlapp;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by MAGDA on 2017-04-18.
  */
@@ -10,22 +13,26 @@ public class Location {
     int id;
     double latitude;
     double longitude;
-
     String time;
+    float speed;
 
     // Empty constructor
-    public Location(){}
+    public Location() {
+    }
 
     // constructor
-    public Location(int id, double lat, double lon){
-        this.id = id;
+    public Location(double lat, double lon) {
         this.latitude = lat;
         this.longitude = lon;
     }
+
+
     // constructor
-    public Location(double lat, double lon){
+    public Location(double lat, double lon, String t, float s) {
         this.latitude = lat;
         this.longitude = lon;
+        this.time = t ;
+        this.speed = s;
     }
 
     public int getId() {
@@ -51,6 +58,7 @@ public class Location {
     public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
+
     public String getTime() {
         return time;
     }
@@ -59,4 +67,11 @@ public class Location {
         this.time = time;
     }
 
+    public float getSpeed() {
+        return speed;
+    }
+
+    public void setSpeed(float speed) {
+        this.speed = speed;
+    }
 }

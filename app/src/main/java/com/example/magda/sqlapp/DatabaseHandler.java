@@ -35,10 +35,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String COLUMN_NAME_ID = "id";
     private static final String COLUMN_NAME_LATITUDE = "latitude";
     private static final String COLUMN_NAME_LONGITUDE = "longitude";
-    private static final String COLUMN_NAME_TIMESTAMP = "timeStamp";
+    private static final String COLUMN_NAME_TIMESTAMP = "time";
+    private static final String COLUMN_NAME_SPEED = "speed";
 
-    long rowId;
-    Timestamp currentTimestamp;
+    String timeStamp;
+    int time;
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -50,8 +51,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_LOCATION + "("
                 + COLUMN_NAME_ID + " INTEGER PRIMARY KEY,"
                 + COLUMN_NAME_LATITUDE + " REAL, "
-                + COLUMN_NAME_LONGITUDE + " REAL"  + ")";
-                //+ COLUMN_NAME_TIMESTAMP + " TEXT " + ")";
+                + COLUMN_NAME_LONGITUDE + " REAL, "  //+ ")";
+                + COLUMN_NAME_TIMESTAMP + " default current_timestamp, "
+                + COLUMN_NAME_SPEED + " REAL);";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
 
@@ -63,50 +65,39 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
         // Create tables again
         onCreate(db);
-
     }
 
     // CRUD (Create, Read, Update, Delete) operations:
 
     // Adding new point
-    public void addPoint(Location location) {
+    public void addNewPoint(Location location) {
         SQLiteDatabase db = this.getReadableDatabase();
         //currentTimestamp = new Timestamp(Calendar.getInstance().getTime().getTime());
-
 
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_LATITUDE, location.getLatitude());
         values.put(COLUMN_NAME_LONGITUDE, location.getLongitude());
-        //values.put(COLUMN_NAME_TIMESTAMP, getTime());
+        values.put(COLUMN_NAME_TIMESTAMP, location.getTime());
+        values.put(COLUMN_NAME_SPEED, location.getSpeed());
 
-        //values.put(COLUMN_TIMESTAMP, " time('now') " );
+        //values.put(COLUMN_NAME_TIMESTAMP, getTime());
         //values.put(COLUMN_TIMESTAMP, getTime(db));
+        //location.setTime(values.getAsString(COLUMN_NAME_TIMESTAMP));
 
         // Inserting Row
 
-        db.insert(TABLE_LOCATION, null, values);
-        //db.execSQL("INSERT INTO "+COLUMN_NAME_TIMESTAMP+" VALUES (null, datetime()) ");
+
+        db.execSQL("INSERT INTO " + TABLE_LOCATION + " (" + COLUMN_NAME_LATITUDE + ", " + COLUMN_NAME_LONGITUDE + ", " + COLUMN_NAME_TIMESTAMP + ", " + COLUMN_NAME_SPEED + ") VALUES ("
+                + location.getLatitude() + ", " + location.getLongitude() + ", '" + location.getTime() + "'9, " + location.getSpeed() + ");");
+/*
+        try {
+            db.insert(TABLE_LOCATION, null, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+
+        //db.execSQL("INSERT INTO "+ TABLE_LOCATION +" (latitude, longitude) VALUES (" + location.getLatitude() + ", " + location.getLongitude() + ");");
         db.close(); // Closing database connection
-    }
-
-    public String getTime() {
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-        return timeStamp;
-    }
-
-    // Getting single point
-    public Location getLocation(int id) {
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        Cursor cursor = db.query(TABLE_LOCATION, new String[] { COLUMN_NAME_ID,
-                        COLUMN_NAME_LATITUDE, COLUMN_NAME_LONGITUDE }, COLUMN_NAME_ID + "=?",
-                new String[] { String.valueOf(id) }, null, null, null, null);
-        if (cursor != null)
-            cursor.moveToFirst();
-
-        Location location = new Location(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2));
-        // return location
-        return location;
     }
 
     // Getting All Points
@@ -125,7 +116,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 location.setId(Integer.parseInt(cursor.getString(0)));
                 location.setLatitude(cursor.getDouble(1));
                 location.setLongitude(cursor.getDouble(2));
-                //location.setTime(cursor.getString(3));
+                location.setTime(cursor.getString(3));
+                location.setSpeed(cursor.getFloat(4));
                 // Adding points to list
                 pointsList.add(location);
             } while (cursor.moveToNext());
@@ -135,6 +127,35 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         // return contact list
         return pointsList;
     }
+
+    public void deleteAllPoints() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("delete from "+ TABLE_LOCATION);
+    }
+
+    public void deleteTable()
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOCATION);
+
+        // Create tables again
+        onCreate(db);
+    }
+
+    /* Getting single point
+    public Location getLocation(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(TABLE_LOCATION, new String[] { COLUMN_NAME_ID,
+                        COLUMN_NAME_LATITUDE, COLUMN_NAME_LONGITUDE }, COLUMN_NAME_ID + "=?",
+                new String[] { String.valueOf(id) }, null, null, null, null);
+        if (cursor != null)
+            cursor.moveToFirst();
+
+        Location location = new Location(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2));
+        // return location
+        return location;
+    }*/
 
     // Getting points Count
     public int getPointsCount() {
@@ -167,12 +188,5 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 new String[] { String.valueOf(location.getId()) });
         db.close();
     }
-
-    public void deleteAllPoints() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("delete from "+ TABLE_LOCATION);
-    }
-
-
 
 }
