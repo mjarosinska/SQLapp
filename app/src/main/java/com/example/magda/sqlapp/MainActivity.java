@@ -18,10 +18,9 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends Activity {
 
-    ArrayList<Long> a = new ArrayList<>();
     Button button;
-    TextView tv;
-    DatabaseHandler db; //= new DatabaseHandler(this);
+    TextView tv, tv2;
+    DatabaseHandler db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,37 +29,31 @@ public class MainActivity extends Activity {
 
         button = (Button) findViewById(R.id.button);
         tv = (TextView) findViewById(R.id.textView);
+        tv2 = (TextView) findViewById(R.id.textView2);
         db = new DatabaseHandler(this);
-
-        /**
-         * CRUD Operations
-         * */
-
-        // Inserting:
-        //Log.d("Insert: ", "Inserting ..");
-        // db.addPoint(new Location (1.111, 533.3));
-        // db.addPoint(new Location (0.222, -0.2));
-
-
-        //Deleting:
-        /*Location point= new Location(12, 7.77777, 777.77777);
-        db.deletePoint(point);*/
-
-        // Reading all points
-        //Log.d("Reading: ", "Reading all contacts..");
     }
 
     public void onClick(View v) {
         db.deleteTable();
         db.deleteAllPoints();
-        db.addNewPoint(new Location(5.55, 8.1188, "2017-01-12 12:33:11", 1.3334223f));
-        List<Location> location = db.getAllPoints();
+
+        db.addNewLocationPoint(new Location(5.55, 8.1188, "2017-01-12 12:34:11", 1.3334223f));
+        float[] values = {3.2222f, 1222.11f, 13.222f};
+        db.addNewAccelerationPoint(new Acceleration(values));
+        db.addNewBooleanPoint(new Bool(true));
+
+        List<Location> location = db.getAllLocationPoints();
+        List<Acceleration> acceleration = db.getAllAccelerationPoints();
+        List<Bool> bool = db.getAllBooleanPoints();
 
         for (Location loc : location) {
-            //String log = "Id: "+ loc.getId()+" , Latitude: " + loc.getLatitude() + " , Longitude: " + loc.getLongitude();
-
             tv.setText(tv.getText() + "\n" + loc.getLatitude() + ", " + loc.getLongitude() //);
-                    + " o godz. " + loc.getTime() + ", " + loc.getSpeed());
+                    + " godz: " + loc.getTime() + ", " + loc.getSpeed());
+        }
+
+        for (Bool a : bool)
+        {
+            tv2.setText(tv2.getText() + "\nbool: " + a.getB() + " time: " + a.getTime());
         }
     }
 

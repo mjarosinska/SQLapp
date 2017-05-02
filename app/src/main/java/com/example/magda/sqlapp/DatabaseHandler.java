@@ -5,13 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
 
-import java.io.File;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -30,16 +26,30 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Location table name
     private static final String TABLE_LOCATION = "loc";
+    // Acceleration table name
+    private static final String TABLE_ACCELERATION = "acc";
+    // Boolean table name
+    private static final String TABLE_BOOLEAN = "bool";
 
-    // Contacts Table Columns names
+    // Location Table Columns names
     private static final String COLUMN_NAME_ID = "id";
     private static final String COLUMN_NAME_LATITUDE = "latitude";
     private static final String COLUMN_NAME_LONGITUDE = "longitude";
     private static final String COLUMN_NAME_TIMESTAMP = "time";
     private static final String COLUMN_NAME_SPEED = "speed";
 
-    String timeStamp;
-    int time;
+    // Acceleration Table Columns names
+    private static final String COLUMN_NAME_ID_ACC = "id";
+    private static final String COLUMN_NAME_X = "x";
+    private static final String COLUMN_NAME_Y = "y";
+    private static final String COLUMN_NAME_Z = "z";
+
+    // Boolean Table Columns names
+    private static final String COLUMN_NAME_ID_BOOL = "id";
+    private static final String COLUMN_NAME_BOOLEAN = "boolean";
+
+    // Current time
+    String timestamp;
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -48,60 +58,107 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     // Creating Tables
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_LOCATION + "("
-                + COLUMN_NAME_ID + " INTEGER PRIMARY KEY,"
+        String CREATE_LOCATION_TABLE = "CREATE TABLE " + TABLE_LOCATION + "("
+                + COLUMN_NAME_ID + " INTEGER PRIMARY KEY, "
                 + COLUMN_NAME_LATITUDE + " REAL, "
-                + COLUMN_NAME_LONGITUDE + " REAL, "  //+ ")";
+                + COLUMN_NAME_LONGITUDE + " REAL, "
                 + COLUMN_NAME_TIMESTAMP + " default current_timestamp, "
                 + COLUMN_NAME_SPEED + " REAL);";
-        db.execSQL(CREATE_CONTACTS_TABLE);
+
+        String CREATE_ACCELERATION_TABLE = "CREATE TABLE " + TABLE_ACCELERATION + "("
+                + COLUMN_NAME_ID_ACC + " INTEGER PRIMARY KEY, "
+                + COLUMN_NAME_X + " REAL, "
+                + COLUMN_NAME_Y + " REAL, "
+                + COLUMN_NAME_Z + " REAL, "
+                + COLUMN_NAME_TIMESTAMP + " default current_timestamp);";
+
+        String CREATE_BOOLEAN_TABLE = "CREATE TABLE " + TABLE_BOOLEAN + "("
+                + COLUMN_NAME_ID_BOOL + " INTEGER PRIMARY KEY, "
+                + COLUMN_NAME_BOOLEAN + " INTEGER, "
+                + COLUMN_NAME_TIMESTAMP + " default current_timestamp);";
+
+        db.execSQL(CREATE_LOCATION_TABLE);
+        db.execSQL(CREATE_ACCELERATION_TABLE);
+        db.execSQL(CREATE_BOOLEAN_TABLE);
     }
 
     // Upgrading database
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop older table if existed
+        // Drop older tables if existed
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOCATION);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ACCELERATION);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOLEAN);
 
         // Create tables again
         onCreate(db);
     }
 
-    // CRUD (Create, Read, Update, Delete) operations:
-
-    // Adding new point
-    public void addNewPoint(Location location) {
+    // Adding new point to Location
+    public void addNewLocationPoint(Location location) {
         SQLiteDatabase db = this.getReadableDatabase();
-        //currentTimestamp = new Timestamp(Calendar.getInstance().getTime().getTime());
 
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_LATITUDE, location.getLatitude());
-        values.put(COLUMN_NAME_LONGITUDE, location.getLongitude());
-        values.put(COLUMN_NAME_TIMESTAMP, location.getTime());
-        values.put(COLUMN_NAME_SPEED, location.getSpeed());
-
-        //values.put(COLUMN_NAME_TIMESTAMP, getTime());
-        //values.put(COLUMN_TIMESTAMP, getTime(db));
-        //location.setTime(values.getAsString(COLUMN_NAME_TIMESTAMP));
+        ContentValues values_loc = new ContentValues();
+        values_loc.put(COLUMN_NAME_LATITUDE, location.getLatitude());
+        values_loc.put(COLUMN_NAME_LONGITUDE, location.getLongitude());
+        values_loc.put(COLUMN_NAME_TIMESTAMP, location.getTime());
+        values_loc.put(COLUMN_NAME_SPEED, location.getSpeed());
 
         // Inserting Row
-
-
-        db.execSQL("INSERT INTO " + TABLE_LOCATION + " (" + COLUMN_NAME_LATITUDE + ", " + COLUMN_NAME_LONGITUDE + ", " + COLUMN_NAME_TIMESTAMP + ", " + COLUMN_NAME_SPEED + ") VALUES ("
-                + location.getLatitude() + ", " + location.getLongitude() + ", '" + location.getTime() + "'9, " + location.getSpeed() + ");");
-/*
         try {
-            db.insert(TABLE_LOCATION, null, values);
+            db.insert(TABLE_LOCATION, null, values_loc);
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
+       db.close(); // Closing database connection
+    }
 
-        //db.execSQL("INSERT INTO "+ TABLE_LOCATION +" (latitude, longitude) VALUES (" + location.getLatitude() + ", " + location.getLongitude() + ");");
+    // Adding new point to Acceleration
+    public void addNewAccelerationPoint(Acceleration acceleration) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        long date = new Date().getTime();
+        timestamp = s.format(date);
+        //System.out.println("czas = " + timestamp.toString());
+
+        ContentValues values_acc = new ContentValues();
+        values_acc.put(COLUMN_NAME_X, acceleration.getX());
+        values_acc.put(COLUMN_NAME_Y, acceleration.getY());
+        values_acc.put(COLUMN_NAME_Z, acceleration.getZ());
+        values_acc.put(COLUMN_NAME_TIMESTAMP, timestamp);
+        acceleration.setTime(timestamp);
+
+        // Inserting Row
+        try {
+            db.insert(TABLE_ACCELERATION, null, values_acc);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         db.close(); // Closing database connection
     }
 
-    // Getting All Points
-    public List<Location> getAllPoints() {
+    public void addNewBooleanPoint(Bool b) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        SimpleDateFormat s = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        long date = new Date().getTime();
+        timestamp = s.format(date);
+
+        ContentValues values_bool = new ContentValues();
+        values_bool.put(COLUMN_NAME_BOOLEAN, b.getB());
+        values_bool.put(COLUMN_NAME_TIMESTAMP, timestamp);
+        b.setTime(timestamp);
+
+        // Inserting Row
+        try {
+            db.insert(TABLE_BOOLEAN, null, values_bool);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        db.close(); // Closing database connection
+    }
+
+    // Getting All Points from Location Table
+    public List<Location> getAllLocationPoints() {
         List<Location> pointsList = new ArrayList<Location>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_LOCATION;
@@ -122,40 +179,70 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 pointsList.add(location);
             } while (cursor.moveToNext());
         }
-
         cursor.close();
-        // return contact list
         return pointsList;
     }
 
+    // Getting All Points from Acceleration Table
+    public List<Acceleration> getAllAccelerationPoints() {
+        List<Acceleration> accList = new ArrayList<Acceleration>();
+        String selectQuery = "SELECT  * FROM " + TABLE_ACCELERATION;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                Acceleration acceleration = new Acceleration();
+                acceleration.setId(Integer.parseInt(cursor.getString(0)));
+                acceleration.setX(cursor.getFloat(1));
+                acceleration.setY(cursor.getFloat(2));
+                acceleration.setZ(cursor.getFloat(3));
+                acceleration.setTime(cursor.getString(4));
+                // Adding points to list
+                accList.add(acceleration);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return accList;
+    }
+
+    // Getting All Points from Boolean Table
+    public List<Bool> getAllBooleanPoints() {
+        List<Bool> boolList = new ArrayList<>();
+        String selectQuery = "SELECT  * FROM " + TABLE_BOOLEAN;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                Bool bool_b = new Bool();
+                bool_b.setId(Integer.parseInt(cursor.getString(0)));
+                bool_b.setB(cursor.getInt(1));
+                bool_b.setTime(cursor.getString(2));
+                // Adding points to list
+                boolList.add(bool_b);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return boolList;
+    }
+
+    // Deleting all points from all tables
     public void deleteAllPoints() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("delete from "+ TABLE_LOCATION);
+        db.execSQL("delete from " + TABLE_ACCELERATION);
+        db.execSQL("delete from " + TABLE_BOOLEAN);
     }
 
     public void deleteTable()
     {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_LOCATION);
-
-        // Create tables again
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ACCELERATION);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOLEAN);
         onCreate(db);
     }
-
-    /* Getting single point
-    public Location getLocation(int id) {
-        SQLiteDatabase db = this.getReadableDatabase();
-
-        Cursor cursor = db.query(TABLE_LOCATION, new String[] { COLUMN_NAME_ID,
-                        COLUMN_NAME_LATITUDE, COLUMN_NAME_LONGITUDE }, COLUMN_NAME_ID + "=?",
-                new String[] { String.valueOf(id) }, null, null, null, null);
-        if (cursor != null)
-            cursor.moveToFirst();
-
-        Location location = new Location(cursor.getInt(0), cursor.getDouble(1), cursor.getDouble(2));
-        // return location
-        return location;
-    }*/
 
     // Getting points Count
     public int getPointsCount() {
@@ -167,26 +254,4 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         // return count
         return cursor.getCount();
     }
-
-    // Updating single point
-    public int updatePoint(Location location) {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_LATITUDE, location.getLatitude());
-        values.put(COLUMN_NAME_LONGITUDE, location.getLongitude());
-
-        // updating row
-        return db.update(TABLE_LOCATION, values, COLUMN_NAME_ID + " = ?",
-                new String[] { String.valueOf(location.getId()) });
-    }
-
-    // Deleting single point
-    public void deletePoint(Location location) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_LOCATION, COLUMN_NAME_ID + " = ?",
-                new String[] { String.valueOf(location.getId()) });
-        db.close();
-    }
-
 }
